@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Modern Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="container">
+            <h2>Dashboard</h2>
+            <p>Welcome to Unit Converter</p>
+
+            <a href="/converter">
+                <button type="button">Open Converter</button>
+            </a>
+
+            <a href="/calculator">
+                <button type="button" class="btn-secondary">Open Calculator</button>
+            </a>
+
+            <a href="/logout" onclick="localStorage.setItem('logoutEvent', Date.now());">
+                <button type="button" class="btn-logout">Logout</button>
+            </a>
+        </div>
+    </div>
+    <script>
+        // Trigger login event for other tabs
+        localStorage.setItem('loginEvent', Date.now());
+        
+        // Listen for logout event
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'logoutEvent') {
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html>

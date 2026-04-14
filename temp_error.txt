@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "D:\Academic\6th - Sem\Cloud Computing\LAB\unit_converter\app.py", line 17, in <module>
+    raise ValueError("MONGO_URI is missing in the .env file! Please add your AWS MongoDB connection string.")
+ValueError: MONGO_URI is missing in the .env file! Please add your AWS MongoDB connection string.

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Modern Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="container">
+            <h2>Create Account</h2>
+            <p>Join us to access the unit converter</p>
+            <form method="POST">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Register</button>
+            </form>
+
+            <div class="divider">or</div>
+
+            <a href="/login/google" style="text-decoration: none;">
+                <button type="button" class="btn-google">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo">
+                    Sign in with Google
+                </button>
+            </a>
+
+            <p style="margin-top: 24px; margin-bottom: 0;">Already have an account? <a href="/login">Login here</a></p>
+        </div>
+    </div>
+    <script>
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'loginEvent') {
+                window.location.href = '/dashboard';
+            }
+        });
+    </script>
+</body>
+</html>

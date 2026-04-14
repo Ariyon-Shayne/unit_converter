@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="container" style="max-width: 500px;">
+            <h2>Scientific Calculator</h2>
+            <p>Advanced math operations</p>
+            
+            <div id="calculator">
+                <input type="text" id="display" class="calc-display" disabled value="0">
+                <div class="calc-grid sci-grid">
+                    <!-- row 1 -->
+                    <button type="button" class="calc-btn op-sci" onclick="calcFunc('sin')">sin</button>
+                    <button type="button" class="calc-btn op-sci" onclick="calcFunc('cos')">cos</button>
+                    <button type="button" class="calc-btn op-sci" onclick="calcFunc('tan')">tan</button>
+                    <button type="button" class="calc-btn clear" onclick="clearDisplay()">C</button>
+                    <button type="button" class="calc-btn clear" onclick="backspace()">⌫</button>
+
+                    <!-- row 2 -->
+                    <button type="button" class="calc-btn op-sci" onclick="calcFunc('sqrt')">√</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('7')">7</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('8')">8</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('9')">9</button>
+                    <button type="button" class="calc-btn op" onclick="appendOp('/')">÷</button>
+                    
+                    <!-- row 3 -->
+                    <button type="button" class="calc-btn op-sci" onclick="appendOp('^')">xʸ</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('4')">4</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('5')">5</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('6')">6</button>
+                    <button type="button" class="calc-btn op" onclick="appendOp('*')">×</button>
+                    
+                    <!-- row 4 -->
+                    <button type="button" class="calc-btn op-sci" onclick="calcFunc('log')">log</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('1')">1</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('2')">2</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('3')">3</button>
+                    <button type="button" class="calc-btn op" onclick="appendOp('-')">-</button>
+                    
+                    <!-- row 5 -->
+                    <button type="button" class="calc-btn op-sci" onclick="calcFunc('ln')">ln</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('0')">0</button>
+                    <button type="button" class="calc-btn" onclick="appendNum('.')">.</button>
+                    <button type="button" class="calc-btn equal" onclick="calculate()">=</button>
+                    <button type="button" class="calc-btn op" onclick="appendOp('+')">+</button>
+                </div>
+            </div>
+
+            <a href="/dashboard">
+                <button type="button" class="btn-secondary" style="margin-top: 10px;">Back to Dashboard</button>
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        // Trigger login event for other tabs
+        localStorage.setItem('loginEvent', Date.now());
+        
+        // Listen for logout event
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'logoutEvent') {
+                window.location.href = '/login';
+            }
+        });
+
+        // Calculator Logic
+        let display = document.getElementById('display');
+        let currentInput = '0';
+        let previousInput = '';
+        let operation = null;
+        let shouldResetDisplay = false;
+
+        function updateDisplay() {
+            display.value = currentInput;
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            previousInput = '';
+            operation = null;
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (currentInput === 'Error') {
+                clearDisplay();
+                return;
+            }
+            if (shouldResetDisplay) return;
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function appendNum(num) {
+            if (currentInput === '0' || currentInput === 'Error' || shouldResetDisplay) {
+                currentInput = num === '.' ? '0.' : num;
+                shouldResetDisplay = false;
+            } else {
+                if (num === '.' && currentInput.includes('.')) return;
+                currentInput += num;
+            }
+            updateDisplay();
+        }
+
+        function appendOp(op) {
+            if (currentInput === 'Error') return;
+            if (operation !== null && !shouldResetDisplay) {
+                calculate();
+            }
+            previousInput = currentInput;
+            operation = op;
+            shouldResetDisplay = true;
+        }
+
+        function calcFunc(func) {
+            if (currentInput === 'Error') return;
+            let current = parseFloat(currentInput);
+            let result;
+            
+            switch (func) {
+                case 'sin':
+                    result = Math.sin(current * Math.PI / 180); // assume degrees
+                    break;
+                case 'cos':
+                    result = Math.cos(current * Math.PI / 180); // assume degrees
+                    break;
+                case 'tan':
+                    result = Math.tan(current * Math.PI / 180); // assume degrees
+                    break;
+                case 'sqrt':
+                    if (current < 0) {
+                        currentInput = "Error";
+                        updateDisplay();
+                        shouldResetDisplay = true;
+                        return;
+                    }
+                    result = Math.sqrt(current);
+                    break;
+                case 'log':
+                    if (current <= 0) {
+                        currentInput = "Error";
+                        updateDisplay();
+                        shouldResetDisplay = true;
+                        return;
+                    }
+                    result = Math.log10(current);
+                    break;
+                case 'ln':
+                    if (current <= 0) {
+                        currentInput = "Error";
+                        updateDisplay();
+                        shouldResetDisplay = true;
+                        return;
+                    }
+                    result = Math.log(current);
+                    break;
+            }
+
+            // round to prevent huge float errors
+            currentInput = Math.round(result * 100000000) / 100000000;
+            currentInput = currentInput.toString();
+            shouldResetDisplay = true;
+            updateDisplay();
+        }
+
+        function calculate() {
+            if (operation === null || shouldResetDisplay || currentInput === 'Error') return;
+
+            let prev = parseFloat(previousInput);
+            let current = parseFloat(currentInput);
+            let result;
+
+            switch (operation) {
+                case '+': result = prev + current; break;
+                case '-': result = prev - current; break;
+                case '*': result = prev * current; break;
+                case '/':
+                    if (current === 0) {
+                        currentInput = "Error";
+                        updateDisplay();
+                        shouldResetDisplay = true;
+                        operation = null;
+                        return;
+                    }
+                    result = prev / current;
+                    break;
+                case '^': result = Math.pow(prev, current); break;
+                default: return;
+            }
+
+            // round to prevent huge float errors
+            currentInput = Math.round(result * 100000000) / 100000000;
+            currentInput = currentInput.toString();
+            operation = null;
+            shouldResetDisplay = true;
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="container">
+            <h2>Unit Converter</h2>
+            <p>Select units and enter a value to convert</p>
+            
+            <form method="POST">
+                <input type="number" step="any" name="value" placeholder="Enter value" value="{{ value }}" required>
+                <select name="conversion">
+                    <option value="km_m" {% if conversion == 'km_m' %}selected{% endif %}>Kilometer → Meter</option>
+                    <option value="m_km" {% if conversion == 'm_km' %}selected{% endif %}>Meter → Kilometer</option>
+                    <option value="kg_g" {% if conversion == 'kg_g' %}selected{% endif %}>Kilogram → Gram</option>
+                    <option value="g_kg" {% if conversion == 'g_kg' %}selected{% endif %}>Gram → Kilogram</option>
+                    <option value="c_f" {% if conversion == 'c_f' %}selected{% endif %}>Celsius → Fahrenheit</option>
+                    <option value="f_c" {% if conversion == 'f_c' %}selected{% endif %}>Fahrenheit → Celsius</option>
+                </select>
+                <button type="submit">Convert</button>
+            </form>
+
+            {% if result is not none %}
+            <div class="result">
+                Result: {{ result }}
+            </div>
+            {% endif %}
+
+            <a href="/dashboard">
+                <button type="button" class="btn-secondary" style="margin-top: 24px;">Back to Dashboard</button>
+            </a>
+        </div>
+    </div>
+    <script>
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'logoutEvent') {
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html>
