@@ -198,5 +198,5 @@ def logout():
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     from waitress import serve
-    print("🚀 Server running at http://127.0.01:5000")
-    serve(app, host="127.0.0.1", port=5000)
+    print("🚀 Server running at http://0.0.0.0:5000")
+    serve(app, host="0.0.0.0", port=5000)
