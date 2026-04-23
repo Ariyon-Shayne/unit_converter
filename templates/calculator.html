@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="auth-wrapper">
+    <div class="auth-wrapper">ṇ
         <div class="container" style="max-width: 500px;">
             <h2>Scientific Calculator</h2>
             <p>Advanced math operations</p>
@@ -75,15 +75,33 @@
         let previousInput = '';
         let operation = null;
         let shouldResetDisplay = false;
+        let waitingForSecondOperand = false;
+
+        function getOpSymbol(op) {
+            if (op === '*') return '×';
+            if (op === '/') return '÷';
+            if (op === '^') return 'xʸ';
+            return op;
+        }
 
         function updateDisplay() {
-            display.value = currentInput;
+            if (operation !== null) {
+                if (waitingForSecondOperand) {
+                    display.value = previousInput + ' ' + getOpSymbol(operation);
+                } else {
+                    display.value = previousInput + ' ' + getOpSymbol(operation) + ' ' + currentInput;
+                }
+            } else {
+                display.value = currentInput;
+            }
         }
 
         function clearDisplay() {
             currentInput = '0';
             previousInput = '';
             operation = null;
+            shouldResetDisplay = false;
+            waitingForSecondOperand = false;
             updateDisplay();
         }
 
@@ -109,17 +127,20 @@
                 if (num === '.' && currentInput.includes('.')) return;
                 currentInput += num;
             }
+            waitingForSecondOperand = false;
             updateDisplay();
         }
 
         function appendOp(op) {
             if (currentInput === 'Error') return;
-            if (operation !== null && !shouldResetDisplay) {
+            if (operation !== null && !waitingForSecondOperand) {
                 calculate();
             }
             previousInput = currentInput;
             operation = op;
             shouldResetDisplay = true;
+            waitingForSecondOperand = true;
+            updateDisplay();
         }
 
         function calcFunc(func) {
@@ -142,6 +163,7 @@
                         currentInput = "Error";
                         updateDisplay();
                         shouldResetDisplay = true;
+                        waitingForSecondOperand = false;
                         return;
                     }
                     result = Math.sqrt(current);
@@ -151,6 +173,7 @@
                         currentInput = "Error";
                         updateDisplay();
                         shouldResetDisplay = true;
+                        waitingForSecondOperand = false;
                         return;
                     }
                     result = Math.log10(current);
@@ -160,6 +183,7 @@
                         currentInput = "Error";
                         updateDisplay();
                         shouldResetDisplay = true;
+                        waitingForSecondOperand = false;
                         return;
                     }
                     result = Math.log(current);
@@ -170,11 +194,12 @@
             currentInput = Math.round(result * 100000000) / 100000000;
             currentInput = currentInput.toString();
             shouldResetDisplay = true;
+            waitingForSecondOperand = false;
             updateDisplay();
         }
 
         function calculate() {
-            if (operation === null || shouldResetDisplay || currentInput === 'Error') return;
+            if (operation === null || waitingForSecondOperand || currentInput === 'Error') return;
 
             let prev = parseFloat(previousInput);
             let current = parseFloat(currentInput);
@@ -187,9 +212,10 @@
                 case '/':
                     if (current === 0) {
                         currentInput = "Error";
-                        updateDisplay();
-                        shouldResetDisplay = true;
                         operation = null;
+                        shouldResetDisplay = true;
+                        waitingForSecondOperand = false;
+                        updateDisplay();
                         return;
                     }
                     result = prev / current;
@@ -203,8 +229,10 @@
             currentInput = currentInput.toString();
             operation = null;
             shouldResetDisplay = true;
+            waitingForSecondOperand = false;
             updateDisplay();
         }
     </script>
+    <script src="{{ url_for('static', filename='timer.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Profile - Modern Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="container">
+            <h2>Almost there!</h2>
+            <p>Please choose a username for your new account.</p>
+            {% if error %}
+            <div style="color: #d32f2f; background-color: #ffebee; border: 1px solid #ef9a9a; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; text-align: center;">
+                {{ error }}
+            </div>
+            {% endif %}
+            <form method="POST">
+                <input type="text" name="username" placeholder="Username" required>
+                <button type="submit">Complete Setup</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        localStorage.removeItem('sessionEndTime');
+    </script>
+</body>
+</html>

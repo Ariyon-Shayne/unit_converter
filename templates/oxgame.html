@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe (OX Game)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 250px;
+        }
+        .cell {
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: #e2e8f0; /* light grey */
+            border: 2px solid transparent;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--text-color, #1f2937);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            user-select: none;
+        }
+        .cell:hover {
+            transform: translateY(-2px);
+            border-color: #e5e7eb;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .cell:active {
+            transform: translateY(0);
+        }
+        .cell.x {
+            color: #ef4444; /* sleek red */
+        }
+        .cell.o {
+            color: #3b82f6; /* sleek blue */
+        }
+        .game-status {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 15px 0;
+            color: var(--text-color, #374151);
+        }
+        .btn-restart {
+            background-color: var(--primary-color, #2563eb);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .btn-restart:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="container" style="max-width: 400px; padding: 2rem;">
+            <h2>Tic-Tac-Toe</h2>
+            <p>The classic OX game</p>
+            
+            <div id="status" class="game-status">Player X's Turn</div>
+
+            <div class="game-board" id="board">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+
+            <button type="button" class="btn-restart" onclick="resetGame()">Restart Game</button>
+
+            <a href="/dashboard">
+                <button type="button" class="btn-secondary">Back to Dashboard</button>
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        // Trigger login event for other tabs
+        localStorage.setItem('loginEvent', Date.now());
+        
+        // Listen for logout event
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'logoutEvent') {
+                window.location.href = '/login';
+            }
+        });
+
+        // Tic Tac Toe Logic
+        const cells = document.querySelectorAll('.cell');
+        const statusText = document.getElementById('status');
+        
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        function handleCellClick(e) {
+            const clickedCell = e.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+            if (gameState[clickedCellIndex] !== "" || !gameActive) {
+                return;
+            }
+
+            gameState[clickedCellIndex] = currentPlayer;
+            clickedCell.innerHTML = currentPlayer;
+            clickedCell.classList.add(currentPlayer.toLowerCase());
+
+            checkResult();
+        }
+
+        function checkResult() {
+            let roundWon = false;
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+                    roundWon = true;
+                    // Optional: Highlight winning cells
+                    cells[a].style.backgroundColor = '#dcfce7'; // light green
+                    cells[b].style.backgroundColor = '#dcfce7';
+                    cells[c].style.backgroundColor = '#dcfce7';
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusText.innerHTML = `Player ${currentPlayer} Wins! 🎉`;
+                statusText.style.color = '#15803d'; // dark green
+                gameActive = false;
+                return;
+            }
+
+            if (!gameState.includes("")) {
+                statusText.innerHTML = "Game ended in a Draw! 🤝";
+                statusText.style.color = '#b45309'; // dark yellow/orange
+                gameActive = false;
+                return;
+            }
+
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            statusText.innerHTML = `Player ${currentPlayer}'s Turn`;
+        }
+
+        function resetGame() {
+            gameActive = true;
+            currentPlayer = "X";
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            statusText.innerHTML = `Player ${currentPlayer}'s Turn`;
+            statusText.style.color = '';
+            cells.forEach(cell => {
+                cell.innerHTML = "";
+                cell.classList.remove('x', 'o');
+                cell.style.backgroundColor = '';
+            });
+        }
+
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+    </script>
+    <script src="{{ url_for('static', filename='timer.js') }}"></script>
+</body>
+</html>

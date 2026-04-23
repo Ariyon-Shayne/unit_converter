@@ -1,5 +1,7 @@
 import os
+import time
 import hashlib
+from datetime import timedelta
 from flask import Flask, render_template, request, redirect, session, url_for
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
@@ -14,6 +16,21 @@ app = Flask(__name__)
 
 # IMPORTANT: strong & stable secret key
 app.secret_key = "my_super_secret_key_12ṇ3456"
+
+# ---------------- SESSION CONFIGURATION ----------------
+# Force users to log in again after 5 minutes of inactivity
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    
+    # Absolute 5-minute timeout enforcement
+    if "login_time" in session:
+        if time.time() - session["login_time"] > 300:
+            session.pop("user", None)
+            session.pop("login_time", None)
+            return redirect("/login")
 
 # ---------------- MONGODB ----------------
 mongo_uri = os.getenv("MONGO_URI")
@@ -52,14 +69,21 @@ def register():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
 
-        if not username or not password:
-            return "All fields required"
+        if not username or not password or not confirm_password:
+            return render_template("register.html", error="All fields required")
+
+        if password != confirm_password:
+            return render_template("register.html", error="Passwords do not match")
+
+        if len(password) < 4:
+            return render_template("register.html", error="Password must be at least 4 characters long")
 
         password = hashlib.sha256(password.encode()).hexdigest()
 
         if users_collection.find_one({"username": username}):
-            return "User already exists"
+            return render_template("register.html", error="Username already exists")
 
         users_collection.insert_one({
             "username": username,
@@ -80,7 +104,7 @@ def login():
         password = request.form.get("password")
 
         if not username or not password:
-            return "All fields required"
+            return render_template("login.html", error="All fields required")
 
         password = hashlib.sha256(password.encode()).hexdigest()
 
@@ -91,9 +115,10 @@ def login():
 
         if user:
             session["user"] = username
+            session["login_time"] = time.time()
             return redirect("/dashboard")
         else:
-            return "Invalid Login"
+            return render_template("login.html", error="Invalid Username or Password")
 
     return render_template("login.html")
 
@@ -106,6 +131,7 @@ def login_google():
         return "❌ Google credentials missing in .env"
 
     redirect_uri = url_for('authorize', _external=True)
+    
     return google.authorize_redirect(redirect_uri, prompt='select_account')
 
 # ---------------- GOOGLE CALLBACK ----------------
@@ -126,26 +152,59 @@ def authorize():
         if not email:
             return "Google login failed: Email not found", 400
 
-        # Save user if not exists
-        user = users_collection.find_one({"username": email})
+        # Save user if not exists based on email (or old fallback)
+        user = users_collection.find_one({"$or": [{"email": email}, {"username": email}]})
+        
         if not user:
-            users_collection.insert_one({
-                "username": email,
-                "password": ""
-            })
+            # First time logging in with this Google account, ask for a username!
+            session["temp_google_email"] = email
+            return redirect("/set_username")
 
-        session["user"] = email
+        # Automatically log them in with the username found in the DB (or fallback to email)
+        session["user"] = user.get("username", email)
+        session["login_time"] = time.time()
         return redirect("/dashboard")
 
     except Exception as e:
         return f"❌ Google OAuth Failed: {str(e)}"
+
+# ---------------- SET USERNAME (GOOGLE AUTH) ----------------
+@app.route("/set_username", methods=["GET", "POST"])
+def set_username():
+    if "temp_google_email" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+        username = request.form.get("username")
+        
+        if not username:
+            return render_template("set_username.html", error="Username is required")
+            
+        if users_collection.find_one({"username": username}):
+            return render_template("set_username.html", error="Username already exists")
+
+        # Save the structured user in MongoDB
+        email = session["temp_google_email"]
+        users_collection.insert_one({
+            "username": username,
+            "email": email,
+            "password": ""  # Handled by Google Identity
+        })
+
+        # Clear the setup session logic and log them strictly in
+        session.pop("temp_google_email", None)
+        session["user"] = username
+        session["login_time"] = time.time()
+        return redirect("/dashboard")
+
+    return render_template("set_username.html")
 
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
         return redirect("/login")
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", username=session.get("user"))
 
 # ---------------- CALCULATOR ----------------
 @app.route("/calculator")
@@ -153,6 +212,13 @@ def calculator():
     if "user" not in session:
         return redirect("/login")
     return render_template("calculator.html")
+
+# ---------------- TIC-TAC-TOE (OX GAME) ----------------
+@app.route("/oxgame")
+def oxgame():
+    if "user" not in session:
+        return redirect("/login")
+    return render_template("oxgame.html")
 
 # ---------------- CONVERTER ----------------
 @app.route("/converter", methods=["GET", "POST"])
@@ -197,6 +263,15 @@ def logout():
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
+    import sys
     from waitress import serve
-    print("🚀 Server running at http://0.0.0.0:5000")
-    serve(app, host="0.0.0.0", port=5000)
+
+    # default port
+    port = 5000
+
+    # if you pass a port in terminal → use it
+    if len(sys.argv) > 1:
+        port = int(sys.argv[1])
+
+    print(f"🚀 Server running at: http://127.0.0.1:{port}")
+    serve(app, host="0.0.0.0", port=port)
