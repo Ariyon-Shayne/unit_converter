@@ -13,7 +13,8 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "1"
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 app = Flask(__name__)
-
+app.config['SERVER_NAME'] = 'ec2-13-60-80-140.eu-north-1.compute.amazonaws.com:5000'
+app.config['PREFERRED_URL_SCHEME'] = 'http'
 # IMPORTANT: strong & stable secret key
 app.secret_key = "my_super_secret_key_12ṇ3456"
 

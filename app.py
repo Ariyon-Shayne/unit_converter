@@ -1,4 +1,5 @@
 import os
+import logging
 import time
 import hashlib
 from datetime import timedelta
@@ -13,7 +14,6 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "1"
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 app = Flask(__name__)
-
 # IMPORTANT: strong & stable secret key
 app.secret_key = "my_super_secret_key_12ṇ3456"
 
@@ -127,13 +127,11 @@ def login():
 def login_google():
     if "user" in session:
         return redirect("/dashboard")
-    if not os.getenv("GOOGLE_CLIENT_ID") or not os.getenv("GOOGLE_CLIENT_SECRET"):
-        return "❌ Google credentials missing in .env"
 
     redirect_uri = url_for('authorize', _external=True)
-    
-    return google.authorize_redirect(redirect_uri, prompt='select_account')
 
+
+    return google.authorize_redirect(redirect_uri, prompt='select_account')
 # ---------------- GOOGLE CALLBACK ----------------
 @app.route("/authorize")
 def authorize():
@@ -273,5 +271,12 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
 
+    # Clear terminal
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+    # Suppress logging
+    logging.getLogger('waitress').setLevel(logging.ERROR)
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
     print(f"🚀 Server running at: http://127.0.0.1:{port}")
-    serve(app, host="0.0.0.0", port=port)
+    serve(app, host="0.0.0.0", port=port)  

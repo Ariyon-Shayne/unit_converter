@@ -16,10 +16,12 @@
                 {{ error }}
             </div>
             {% endif %}
-            <form method="POST">
-                <input type="text" name="username" placeholder="Username" required>
-                <input type="password" name="password" placeholder="Password" minlength="4" required>
-                <input type="password" name="confirm_password" placeholder="Confirm Password" minlength="4" required>
+            <form method="POST" autocomplete="off">
+                <input type="text" name="username" placeholder="Username" required autocomplete="off">
+                <input type="password" id="reg-password" name="password" placeholder="Password" minlength="4" required autocomplete="new-password">
+                <div id="password-strength" style="height: 4px; border-radius: 2px; margin-top: -10px; margin-bottom: 5px; transition: all 0.3s; width: 0;"></div>
+                <small id="strength-text" style="display: block; text-align: left; font-size: 12px; margin-top: -5px; margin-bottom: 10px; color: #64748b;"></small>
+                <input type="password" name="confirm_password" placeholder="Confirm Password" minlength="4" required autocomplete="new-password">
                 <button type="submit">Register</button>
             </form>
 
@@ -37,6 +39,47 @@
     </div>
     <script>
         localStorage.removeItem('sessionEndTime');
+        
+        const passwordInput = document.getElementById('reg-password');
+        const strengthBar = document.getElementById('password-strength');
+        const strengthText = document.getElementById('strength-text');
+
+        passwordInput.addEventListener('input', () => {
+            const val = passwordInput.value;
+            let strength = 0;
+            let status = "";
+            let color = "#cbd5e1";
+
+            if (val.length >= 4) {
+                strength = 1;
+                if (val.length >= 8) strength++;
+                if (/[A-Z]/.test(val)) strength++;
+                if (/[0-9]/.test(val)) strength++;
+                if (/[^A-Za-z0-9]/.test(val)) strength++;
+            }
+
+            if (val.length === 0) {
+                status = "";
+                strengthBar.style.width = "0%";
+            } else if (strength <= 2) {
+                status = "Weak Password";
+                color = "#ef4444";
+                strengthBar.style.width = "33%";
+            } else if (strength <= 4) {
+                status = "Medium Password";
+                color = "#f59e0b";
+                strengthBar.style.width = "66%";
+            } else {
+                status = "Strong Password";
+                color = "#10b981";
+                strengthBar.style.width = "100%";
+            }
+
+            strengthText.textContent = status;
+            strengthText.style.color = color;
+            strengthBar.style.backgroundColor = color;
+        });
+
         window.addEventListener('storage', function(e) {
             if (e.key === 'loginEvent') {
                 window.location.href = '/dashboard';

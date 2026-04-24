@@ -16,9 +16,9 @@
                 {{ error }}
             </div>
             {% endif %}
-            <form method="POST">
-                <input type="text" name="username" placeholder="Username" required>
-                <input type="password" name="password" placeholder="Password" required>
+            <form method="POST" autocomplete="off">
+                <input type="text" name="username" placeholder="Username" required autocomplete="off">
+                <input type="password" name="password" placeholder="Password" required autocomplete="new-password">
                 <button type="submit">Login</button>
             </form>
 
